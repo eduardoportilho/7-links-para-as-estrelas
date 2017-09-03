@@ -10,9 +10,18 @@ import jsonp from 'jsonp'
  */
 
 /**
+ * @typedef {Object} QueryResult
+ * @property {ContinueData} [continue]
+ * @property {Object} query
+ * @property {Object} query.pages - {id: QueryResultPage}
+ */
+
+/**
  * @typedef {Object} ContinueData
- * @property {string} continue
- * @property {string} accontinue
+ */
+
+/**
+ * @typedef {Object} QueryResultPage
  */
 
 class Wikipedia {
