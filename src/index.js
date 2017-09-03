@@ -1,4 +1,3 @@
-import jsonp from 'jsonp'
 import _ from 'lodash'
 import wikipedia from './wikipedia'
 
@@ -87,7 +86,7 @@ function getPathToInitialPage (page) {
   return path
 }
 
-function findPaths(pages, targetTitle) {
+function findPaths (pages, targetTitle) {
   const lowerTargetTitle = targetTitle.toLowerCase()
   return pages.filter(page => (page.title.toLowerCase() === lowerTargetTitle))
     .map(getPathToInitialPage)
@@ -103,11 +102,10 @@ async function setelinksParaAsEstrelas (initialTitle, targetTitle) {
   let pagesInDepth = [initialPage]
 
   while (depth >= 0) {
-    console.log(`Depth: ${MAX_DEPTH - depth}, visited links: ${++visitedTitles.length}`)
     let nextDepthPages = []
 
     // get all links for wp
-    let links = pagesInDepth.map(page -> page.links)
+    let links = pagesInDepth.map(page => page.links)
     let allLinkedPages = await wikipedia.getPages(links)
 
     // build tree
@@ -121,7 +119,7 @@ async function setelinksParaAsEstrelas (initialTitle, targetTitle) {
     }
 
     // find paths in depth
-    let paths = this.findPaths(nextDepthPages, targetTitle)
+    let paths = findPaths(nextDepthPages, targetTitle)
     foundPaths = _.concat(foundPaths, paths)
 
     pagesInDepth = nextDepthPages
@@ -129,6 +127,5 @@ async function setelinksParaAsEstrelas (initialTitle, targetTitle) {
   }
   console.log(`>>>`, foundPaths)
 }
-
 
 setelinksParaAsEstrelas('Vince Vaughn', 'Jennifer Aniston')

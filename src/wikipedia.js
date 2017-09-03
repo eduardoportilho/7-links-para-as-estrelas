@@ -1,3 +1,5 @@
+import jsonp from 'jsonp'
+
 /**
  * @typedef {Object} Page
  * @property {number} id - Page ID.
@@ -8,7 +10,6 @@
  */
 
 class Wikipedia {
-
   /**
    * @param  {string} title
    * @return {Object} {title : Page}
