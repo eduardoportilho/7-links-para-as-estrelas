@@ -9085,40 +9085,42 @@ var convertLiksToPages = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(page) {
     var _this = this;
 
-    var linkPages;
+    var linkChunks, pageChunks, pages;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
-            _context2.next = 2;
-            return Promise.all(page.links.map(function () {
-              var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(link) {
-                var linkPage;
+            // Specifying titles through the query string (either through titles or pageids) is limited to 50 titles per query
+            linkChunks = _lodash2.default.chunk(page.links, 50);
+            _context2.next = 3;
+            return Promise.all(linkChunks.map(function () {
+              var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(links) {
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                   while (1) {
                     switch (_context.prev = _context.next) {
                       case 0:
                         _context.prev = 0;
                         _context.next = 3;
-                        return getPage(link.title, page);
+                        return getPages(links.map(function (link) {
+                          return link.title;
+                        }), page);
 
                       case 3:
-                        linkPage = _context.sent;
-                        return _context.abrupt('return', linkPage);
+                        return _context.abrupt('return', _context.sent);
 
-                      case 7:
-                        _context.prev = 7;
+                      case 6:
+                        _context.prev = 6;
                         _context.t0 = _context['catch'](0);
 
                         console.log('X Error:', _context.t0);
                         return _context.abrupt('return', null);
 
-                      case 11:
+                      case 10:
                       case 'end':
                         return _context.stop();
                     }
                   }
-                }, _callee, _this, [[0, 7]]);
+                }, _callee, _this, [[0, 6]]);
               }));
 
               return function (_x2) {
@@ -9126,16 +9128,16 @@ var convertLiksToPages = function () {
               };
             }()));
 
-          case 2:
-            linkPages = _context2.sent;
-
-            linkPages = linkPages.filter(function (page) {
+          case 3:
+            pageChunks = _context2.sent;
+            pages = _lodash2.default.flatten(pageChunks).filter(function (page) {
               return page !== null;
             });
-            page.links = linkPages;
-            return _context2.abrupt('return', linkPages);
 
-          case 6:
+            page.links = pages;
+            return _context2.abrupt('return', pages);
+
+          case 7:
           case 'end':
             return _context2.stop();
         }
@@ -9150,107 +9152,105 @@ var convertLiksToPages = function () {
 
 var setelinksParaAsEstrelas = function () {
   var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(initialTitle, targetTitle) {
-    var title, initialPage, foundPaths, depth, pagesInDepth, nextDepthPages, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, currentPage, pagesLinkedInCurrentPage;
+    var initialPage, foundPaths, depth, pagesInDepth, nextDepthPages, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, currentPage, pagesLinkedInCurrentPage;
 
     return regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
-            title = encodeURIComponent(initialTitle);
-            _context3.next = 3;
-            return getPage(title);
+            _context3.next = 2;
+            return getPages([initialTitle]);
 
-          case 3:
+          case 2:
             initialPage = _context3.sent;
             foundPaths = [];
             depth = MAX_DEPTH;
-            pagesInDepth = [initialPage];
+            pagesInDepth = initialPage;
 
-          case 7:
+          case 6:
             if (!(depth >= 0)) {
-              _context3.next = 43;
+              _context3.next = 41;
               break;
             }
 
-            console.log('Depth: ' + (MAX_DEPTH - depth) + ', visited links: ' + ++visitedTitles.length);
-            // console.log(`Pages in depth ${depth}`, ); 
+            // console.log(`Depth: ${MAX_DEPTH - depth}, visited links: ${++visitedTitles.length}`)
             nextDepthPages = [];
             _iteratorNormalCompletion2 = true;
             _didIteratorError2 = false;
             _iteratorError2 = undefined;
-            _context3.prev = 13;
+            _context3.prev = 11;
             _iterator2 = pagesInDepth[Symbol.iterator]();
 
-          case 15:
+          case 13:
             if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-              _context3.next = 25;
+              _context3.next = 23;
               break;
             }
 
             currentPage = _step2.value;
-            _context3.next = 19;
+            _context3.next = 17;
             return convertLiksToPages(currentPage);
 
-          case 19:
+          case 17:
             pagesLinkedInCurrentPage = _context3.sent;
 
             foundPaths = foundPaths.concat(getPathsToTarget(pagesLinkedInCurrentPage, targetTitle));
             nextDepthPages = nextDepthPages.concat(pagesLinkedInCurrentPage);
 
-          case 22:
+          case 20:
             _iteratorNormalCompletion2 = true;
-            _context3.next = 15;
+            _context3.next = 13;
+            break;
+
+          case 23:
+            _context3.next = 29;
             break;
 
           case 25:
-            _context3.next = 31;
-            break;
-
-          case 27:
-            _context3.prev = 27;
-            _context3.t0 = _context3['catch'](13);
+            _context3.prev = 25;
+            _context3.t0 = _context3['catch'](11);
             _didIteratorError2 = true;
             _iteratorError2 = _context3.t0;
 
-          case 31:
-            _context3.prev = 31;
-            _context3.prev = 32;
+          case 29:
+            _context3.prev = 29;
+            _context3.prev = 30;
 
             if (!_iteratorNormalCompletion2 && _iterator2.return) {
               _iterator2.return();
             }
 
-          case 34:
-            _context3.prev = 34;
+          case 32:
+            _context3.prev = 32;
 
             if (!_didIteratorError2) {
-              _context3.next = 37;
+              _context3.next = 35;
               break;
             }
 
             throw _iteratorError2;
 
+          case 35:
+            return _context3.finish(32);
+
+          case 36:
+            return _context3.finish(29);
+
           case 37:
-            return _context3.finish(34);
-
-          case 38:
-            return _context3.finish(31);
-
-          case 39:
             pagesInDepth = nextDepthPages;
             depth--;
-            _context3.next = 7;
+            _context3.next = 6;
             break;
 
-          case 43:
+          case 41:
             console.log('>>>', foundPaths);
 
-          case 44:
+          case 42:
           case 'end':
             return _context3.stop();
         }
       }
-    }, _callee3, this, [[13, 27, 31, 39], [32,, 34, 38]]);
+    }, _callee3, this, [[11, 25, 29, 37], [30,, 32, 36]]);
   }));
 
   return function setelinksParaAsEstrelas(_x3, _x4) {
@@ -9271,41 +9271,47 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 var visitedTitles = [];
-function getPage(title, parent) {
+
+function getPages(titles, parent) {
   return new Promise(function (resolve, reject) {
-    (0, _jsonp2.default)(getQueryEndpoint(title), function (err, data) {
-      visitedTitles.push(title);
+    (0, _jsonp2.default)(getQueryEndpoint(titles), function (err, data) {
+      visitedTitles = visitedTitles.concat(titles);
       if (err) {
         reject(err);
       } else {
-        resolve(dataToPage(data, title, parent));
+        resolve(dataToPages(data, parent));
       }
     });
   });
 }
 
-function getQueryEndpoint(title) {
+function getQueryEndpoint(titles) {
+  var encodedTitles = encodeURIComponent(titles.join('|'));
   // return `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links%7Cinfo&pllimit=500&titles=${title}`
-  return 'https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links&pllimit=500&titles=' + title;
+  return 'https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links%7Cinfo&pllimit=500&titles=' + encodedTitles;
 }
 
-function dataToPage(data, title, parent) {
-  var pageId = Object.keys(data.query.pages)[0];
-  var page = data.query.pages[pageId];
-  var links = [];
-  if (page.links) {
-    links = _lodash2.default.uniq(page.links).filter(function (link) {
-      return visitedTitles.indexOf(link.title) < 0;
-    }).map(function (link) {
-      return { title: link.title };
+function dataToPages(data, parent) {
+  var pages = [];
+  for (var pageId in data.query.pages) {
+    var page = data.query.pages[pageId];
+    var links = [];
+    if (page.links) {
+      // remove links visitados
+      links = _lodash2.default.uniq(page.links).filter(function (link) {
+        return visitedTitles.indexOf(link.title) < 0;
+      }).map(function (link) {
+        return { title: link.title };
+      });
+    }
+    pages.push({
+      id: pageId,
+      title: page.title,
+      parent: parent,
+      links: links
     });
   }
-  return {
-    id: pageId,
-    title: title,
-    parent: parent,
-    links: links
-  };
+  return pages;
 }
 
 function getPathsToTarget(linkedPages, targetTitle) {

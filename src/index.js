@@ -1,57 +1,64 @@
 import jsonp from 'jsonp'
 import _ from 'lodash'
 
-const visitedTitles = []
-function getPage (title, parent) {
+let visitedTitles = []
+
+function getPages (titles, parent) {
   return new Promise((resolve, reject) => {
-    jsonp(getQueryEndpoint(title), (err, data) => {
-      visitedTitles.push(title)
+    jsonp(getQueryEndpoint(titles), (err, data) => {
+      visitedTitles = visitedTitles.concat(titles)
       if (err) {
         reject(err)
       } else {
-        resolve(dataToPage(data, title, parent))
+        resolve(dataToPages(data, parent))
       }
     })
   })
 }
 
-function getQueryEndpoint (title) {
+function getQueryEndpoint (titles) {
+  const encodedTitles = encodeURIComponent(titles.join('|'))
   // return `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links%7Cinfo&pllimit=500&titles=${title}`
-  return `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links&pllimit=500&titles=${title}`
+  return `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links%7Cinfo&pllimit=500&titles=${encodedTitles}`
 }
 
-function dataToPage (data, title, parent) {
-  let pageId = Object.keys(data.query.pages)[0]
-  let page = data.query.pages[pageId]
-  let links = []
-  if (page.links) {
-   links = _.uniq(page.links)
-    .filter(link => visitedTitles.indexOf(link.title) < 0)
-    .map(link => ({title: link.title}))
+function dataToPages (data, parent) {
+  const pages = []
+  for (let pageId in data.query.pages) {
+    let page = data.query.pages[pageId]
+    let links = []
+    if (page.links) {
+      // remove links visitados
+      links = _.uniq(page.links)
+        .filter(link => visitedTitles.indexOf(link.title) < 0)
+        .map(link => ({title: link.title}))
+    }
+    pages.push({
+      id: pageId,
+      title: page.title,
+      parent: parent,
+      links: links
+    })
   }
-  return {
-    id: pageId,
-    title: title,
-    parent: parent,
-    links: links
-  }
+  return pages
 }
 
 async function convertLiksToPages (page) {
-  let linkPages = await Promise.all(
-    page.links.map(async (link) => {
+  // Specifying titles through the query string (either through titles or pageids) is limited to 50 titles per query
+  const linkChunks = _.chunk(page.links, 50)
+  const pageChunks = await Promise.all(
+    linkChunks.map(async (links) => {
       try {
-        let linkPage = await getPage(link.title, page)
-        return linkPage
+        return await getPages(links.map(link => link.title), page)
       } catch (any) {
         console.log(`X Error:`, any)
         return null
       }
     })
   )
-  linkPages = linkPages.filter(page => page !== null)
-  page.links = linkPages
-  return linkPages
+  const pages = _.flatten(pageChunks).filter(page => page !== null)
+  page.links = pages
+  return pages
 }
 
 function getPathsToTarget (linkedPages, targetTitle) {
@@ -80,15 +87,14 @@ function getPath (page) {
 const MAX_DEPTH = 3
 
 async function setelinksParaAsEstrelas (initialTitle, targetTitle) {
-  const title = encodeURIComponent(initialTitle)
-  const initialPage = await getPage(title)
+  let initialPage = await getPages([initialTitle])
+
   let foundPaths = []
   let depth = MAX_DEPTH
-  let pagesInDepth = [initialPage]
+  let pagesInDepth = initialPage
 
   while (depth >= 0) {
-    console.log(`Depth: ${MAX_DEPTH - depth}, visited links: ${++visitedTitles.length}`)
-    // console.log(`Pages in depth ${depth}`, ); 
+    // console.log(`Depth: ${MAX_DEPTH - depth}, visited links: ${++visitedTitles.length}`)
     let nextDepthPages = []
     for (let currentPage of pagesInDepth) {
       let pagesLinkedInCurrentPage = await convertLiksToPages(currentPage)
