@@ -9,19 +9,25 @@ import jsonp from 'jsonp'
  * @property {Page[]} [linkedPages] - Linked pages (may be undefined).
  */
 
+/**
+ * @typedef {Object} ContinueData
+ * @property {string} continue
+ * @property {string} accontinue
+ */
+
 class Wikipedia {
   /**
    * @param  {string} title
-   * @return {Object} {title : Page}
+   * @return {Page}
    */
   getPage (title) {
     const pages = this.getPages([title])
-    return pages.length > 0 ? pages[0] : undefined
+    return pages[title]
   }
 
   /**
    * @param  {string[]} titles
-   * @return {Object[]} Array of {title : Page}
+   * @return {Object} {title : Page}
    */
   async getPages (titles) {
     let endpoint = this._getQueryEndpoint(titles)
@@ -50,15 +56,31 @@ class Wikipedia {
     })
   }
 
+  /**
+   * @param  {string[]} titles
+   * @return {string}
+   */
   _getQueryEndpoint (titles) {
     const encodedTitles = encodeURIComponent(titles.join('|'))
     return `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links%7Cinfo&pllimit=500&titles=${encodedTitles}`
   }
 
+  /**
+   * @param {string} endpoint
+   * @param {ContinueData} continueData
+   */
   _addContinueParams (endpoint, continueData) {}
 
+  /**
+   * @param  {QueryResult[]} queryResults
+   * @return {QueryResult} Merged query result
+   */
   _merge (queryResults) {}
 
+  /**
+   * @param  {QueryResult} queryResult
+   * @return {Object} {title : Page}
+   */
   _dataToPages (queryResult) {}
 }
 
