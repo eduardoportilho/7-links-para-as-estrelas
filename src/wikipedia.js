@@ -34,7 +34,7 @@ class Wikipedia {
     let data = await this._get(endpoint)
     let queryResults = [data]
     while (data.continue) {
-      endpoint = this._addContinueParams(endpoint, data.continue)
+      endpoint = this._addContinueParamsToEndpoint(endpoint, data.continue)
       data = await this._get(endpoint)
       queryResults.push(data)
     }
@@ -69,7 +69,11 @@ class Wikipedia {
    * @param {string} endpoint
    * @param {ContinueData} continueData
    */
-  _addContinueParams (endpoint, continueData) {}
+  _addContinueParamsToEndpoint (endpoint, continueData) {
+    return _.reduce(continueData, (result, value, key) => (
+      return `${result}&${key}=${value}`
+    ), endpoint)
+  }
 
   /**
    * @param  {QueryResult[]} queryResults
