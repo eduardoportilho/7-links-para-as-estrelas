@@ -34,8 +34,8 @@ class Wikipedia {
    * @param  {string} title
    * @return {Page}
    */
-  getPage (title) {
-    const pages = this.getPages([title])
+  async getPage (title) {
+    const pages = await this.getPages([title])
     return pages[title]
   }
 
