@@ -89,10 +89,26 @@ class Wikipedia {
   }
 
   /**
-   * @param  {QueryResult[]} queryResults
+   * @param  {QueryResult[]} queryResultArray
    * @return {QueryResult} Merged query result
    */
-  _merge (queryResults) {}
+  _mergeQueryResults (queryResultArray) {
+    const mergedPages = {}
+    for (let queryResults of queryResultArray) {
+      for (let page in queryResults.query.pages) {
+        let pageId = page.pageid
+        if (!mergedPages[pageId]) {
+          mergedPages[pageId] = page
+        } else {
+          mergedPages[pageId].links = _.merge(
+            mergedPages[pageId].links,
+            page.links
+          )
+        }
+      }
+    }
+    return { query: { pages: mergedPages } }
+  }
 
   /**
    * @param  {QueryResult} queryResult
