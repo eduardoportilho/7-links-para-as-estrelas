@@ -98,7 +98,17 @@ class Wikipedia {
    * @param  {QueryResult} queryResult
    * @return {Object} {title : Page}
    */
-  _dataToPages (queryResult) {}
+  _dataToPages (queryResult) {
+    const pages = {}
+    for (let queryPage in queryResult.query.pages) {
+      pages[queryPage.pageid] = {
+        id: queryPage.pageid,
+        title: queryPage.title,
+        links: queryPage.links.map(link => link.title)
+      }
+    }
+    return pages
+  }
 }
 
 export default new Wikipedia()
