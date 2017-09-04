@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import jsonp from 'jsonp'
 
 /**
@@ -44,21 +45,23 @@ class Wikipedia {
    */
   async getPages (titles) {
     let endpoint = this._getQueryEndpoint(titles)
-    let data = await this._get(endpoint)
-    let queryResults = [data]
-    while (data.continue) {
-      endpoint = this._addContinueParamsToEndpoint(endpoint, data.continue)
-      data = await this._get(endpoint)
-      queryResults.push(data)
+    let queryResults = await this._get(endpoint)
+    let allResults = [queryResults]
+    while (queryResults.continue) {
+      let continueEndpoint = this._addContinueParamsToEndpoint(endpoint, queryResults.continue)
+      queryResults = await this._get(continueEndpoint)
+      allResults.push(queryResults)
     }
-    const mergedResults = this._merge(queryResults)
+    const mergedResults = this._mergeQueryResults(allResults)
     return this._dataToPages(mergedResults)
   }
 
-  _get (titles) {
+  /**
+   * @param  {string} endpoint
+   * @return {Promise.<QueryResult>}
+   */
+  _get (endpoint) {
     return new Promise((resolve, reject) => {
-      const endpoint = this.getQueryEndpoint(titles)
-      // console.log(`GET ${endpoint}`)
       jsonp(endpoint, (err, data) => {
         if (err) {
           reject(err)
@@ -84,7 +87,7 @@ class Wikipedia {
    */
   _addContinueParamsToEndpoint (endpoint, continueData) {
     return _.reduce(continueData, (result, value, key) => (
-      return `${result}&${key}=${value}`
+      `${result}&${key}=${value}`
     ), endpoint)
   }
 
