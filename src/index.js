@@ -30,13 +30,19 @@ async function setelinksParaAsEstrelas (initialTitle, targetTitle) {
     let nextDepthPages = []
 
     // get all links for wp
-    let links = pagesInDepth.map(page => page.links)
+    let links = _.flatten(pagesInDepth.map(page => page.links))
     let allLinkedPages = await wikipedia.getPages(links)
 
     // build tree
     for (let page of pagesInDepth) {
       page.linkedPages = page.links.map(link => {
-        let linkedPage = _.clone(allLinkedPages[link])
+        // TODO : not all links ar in allLinkedPages
+        let linkedPage = null
+        if (allLinkedPages[link]) {
+          linkedPage = _.clone(allLinkedPages[link])
+        } else {
+          linkedPage = {title: link, links: []}
+        }
         linkedPage.parent = page
         return linkedPage
       })

@@ -44,9 +44,12 @@ class Wikipedia {
    * @return {Object} {title : Page}
    */
   async getPages (titles) {
-    let endpoint = this._getQueryEndpoint(titles)
+    const titleChunks = _.chunk(titles, 50)
+    // TODO: handle all chunks
+
+    const endpoint = this._getQueryEndpoint(titleChunks[0])
     let queryResults = await this._get(endpoint)
-    let allResults = [queryResults]
+    const allResults = [queryResults]
     while (queryResults.continue) {
       let continueEndpoint = this._addContinueParamsToEndpoint(endpoint, queryResults.continue)
       queryResults = await this._get(continueEndpoint)
@@ -96,16 +99,23 @@ class Wikipedia {
    * @return {QueryResult} Merged query result
    */
   _mergeQueryResults (queryResultArray) {
+    if (queryResultArray.length == 1) {
+      return queryResultArray[0]
+    }
     const mergedPages = {}
     for (let queryResults of queryResultArray) {
-      for (let page in queryResults.query.pages) {
+      for (let key in queryResults.query.pages) {
+        let page = queryResults.query.pages[key]
         let pageId = page.pageid
         if (!mergedPages[pageId]) {
           mergedPages[pageId] = page
+        } else if (!mergedPages[pageId].links) {
+          mergedPages[pageId].links = page.links
         } else {
-          mergedPages[pageId].links = _.merge(
+          mergedPages[pageId].links = _.unionBy(
             mergedPages[pageId].links,
-            page.links
+            page.links,
+            linkObj => linkObj.title
           )
         }
       }
@@ -119,8 +129,9 @@ class Wikipedia {
    */
   _dataToPages (queryResult) {
     const pages = {}
-    for (let queryPage in queryResult.query.pages) {
-      pages[queryPage.pageid] = {
+    for (let key in queryResult.query.pages) {
+      let queryPage = queryResult.query.pages[key]
+      pages[queryPage.title] = {
         id: queryPage.pageid,
         title: queryPage.title,
         links: queryPage.links.map(link => link.title)
