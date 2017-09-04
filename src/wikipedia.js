@@ -22,6 +22,10 @@ import jsonp from 'jsonp'
 
 /**
  * @typedef {Object} QueryResultPage
+ * @property {number} pageid - Page ID.
+ * @property {string} title - Page title.
+ * @property {Object[]} links - Title of the linked pages.
+ * @property {string} links.title - Linked page title.
  */
 
 class Wikipedia {
