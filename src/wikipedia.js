@@ -45,18 +45,32 @@ class Wikipedia {
    */
   async getPages (titles) {
     const titleChunks = _.chunk(titles, 50)
-    // TODO: handle all chunks
-
-    const endpoint = this._getQueryEndpoint(titleChunks[0])
-    let queryResults = await this._get(endpoint)
-    const allResults = [queryResults]
-    while (queryResults.continue) {
-      let continueEndpoint = this._addContinueParamsToEndpoint(endpoint, queryResults.continue)
-      queryResults = await this._get(continueEndpoint)
-      allResults.push(queryResults)
+    let allResults = []
+    for (let titleChunk of titleChunks) {
+      let endpoint = this._getQueryEndpoint(titleChunk)
+      // TODO: is it possible to parallelize?
+      let chunkResults = this._getAndContinue(endpoint)
+      allResults = _.concat(allResults, chunkResults)
     }
     const mergedResults = this._mergeQueryResults(allResults)
     return this._dataToPages(mergedResults)
+  }
+
+  /**
+   * @param  {string} endpoint
+   * @return {QueryResult[]}
+   */
+  async _getAndContinue (endpoint) {
+    const allResults = []
+    let nextPageEndpoint = endpoint
+    let shouldQueryNextPage = true
+    while (shouldQueryNextPage) {
+      let queryResults = await this._get(nextPageEndpoint)
+      allResults.push(queryResults)
+      shouldQueryNextPage = queryResults.continue !== undefined
+      nextPageEndpoint = shouldQueryNextPage && this._addContinueParamsToEndpoint(endpoint, queryResults.continue)
+    }
+    return allResults
   }
 
   /**
