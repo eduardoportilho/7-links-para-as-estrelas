@@ -49,7 +49,7 @@ class Wikipedia {
     for (let titleChunk of titleChunks) {
       let endpoint = this._getQueryEndpoint(titleChunk)
       // TODO: is it possible to parallelize?
-      let chunkResults = this._getAndContinue(endpoint)
+      let chunkResults = await this._getAndContinue(endpoint)
       allResults = _.concat(allResults, chunkResults)
     }
     const mergedResults = this._mergeQueryResults(allResults)
@@ -113,7 +113,7 @@ class Wikipedia {
    * @return {QueryResult} Merged query result
    */
   _mergeQueryResults (queryResultArray) {
-    if (queryResultArray.length == 1) {
+    if (queryResultArray.length === 1) {
       return queryResultArray[0]
     }
     const mergedPages = {}

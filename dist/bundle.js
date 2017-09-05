@@ -26481,49 +26481,87 @@ var Wikipedia = function () {
     key: 'getPages',
     value: function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(titles) {
-        var titleChunks, endpoint, queryResults, allResults, continueEndpoint, mergedResults;
+        var titleChunks, allResults, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, titleChunk, endpoint, chunkResults, mergedResults;
+
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 titleChunks = _lodash2.default.chunk(titles, 50);
-                // TODO: handle all chunks
+                allResults = [];
+                _iteratorNormalCompletion = true;
+                _didIteratorError = false;
+                _iteratorError = undefined;
+                _context2.prev = 5;
+                _iterator = titleChunks[Symbol.iterator]();
 
-                endpoint = this._getQueryEndpoint(titleChunks[0]);
-                _context2.next = 4;
-                return this._get(endpoint);
-
-              case 4:
-                queryResults = _context2.sent;
-                allResults = [queryResults];
-
-              case 6:
-                if (!queryResults.continue) {
-                  _context2.next = 14;
+              case 7:
+                if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                  _context2.next = 17;
                   break;
                 }
 
-                continueEndpoint = this._addContinueParamsToEndpoint(endpoint, queryResults.continue);
-                _context2.next = 10;
-                return this._get(continueEndpoint);
+                titleChunk = _step.value;
+                endpoint = this._getQueryEndpoint(titleChunk);
+                // TODO: is it possible to parallelize?
 
-              case 10:
-                queryResults = _context2.sent;
+                _context2.next = 12;
+                return this._getAndContinue(endpoint);
 
-                allResults.push(queryResults);
-                _context2.next = 6;
-                break;
+              case 12:
+                chunkResults = _context2.sent;
+
+                allResults = _lodash2.default.concat(allResults, chunkResults);
 
               case 14:
+                _iteratorNormalCompletion = true;
+                _context2.next = 7;
+                break;
+
+              case 17:
+                _context2.next = 23;
+                break;
+
+              case 19:
+                _context2.prev = 19;
+                _context2.t0 = _context2['catch'](5);
+                _didIteratorError = true;
+                _iteratorError = _context2.t0;
+
+              case 23:
+                _context2.prev = 23;
+                _context2.prev = 24;
+
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+
+              case 26:
+                _context2.prev = 26;
+
+                if (!_didIteratorError) {
+                  _context2.next = 29;
+                  break;
+                }
+
+                throw _iteratorError;
+
+              case 29:
+                return _context2.finish(26);
+
+              case 30:
+                return _context2.finish(23);
+
+              case 31:
                 mergedResults = this._mergeQueryResults(allResults);
                 return _context2.abrupt('return', this._dataToPages(mergedResults));
 
-              case 16:
+              case 33:
               case 'end':
                 return _context2.stop();
             }
           }
-        }, _callee2, this);
+        }, _callee2, this, [[5, 19, 23, 31], [24,, 26, 30]]);
       }));
 
       function getPages(_x2) {
@@ -26531,6 +26569,60 @@ var Wikipedia = function () {
       }
 
       return getPages;
+    }()
+
+    /**
+     * @param  {string} endpoint
+     * @return {QueryResult[]}
+     */
+
+  }, {
+    key: '_getAndContinue',
+    value: function () {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(endpoint) {
+        var allResults, nextPageEndpoint, shouldQueryNextPage, queryResults;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                allResults = [];
+                nextPageEndpoint = endpoint;
+                shouldQueryNextPage = true;
+
+              case 3:
+                if (!shouldQueryNextPage) {
+                  _context3.next = 12;
+                  break;
+                }
+
+                _context3.next = 6;
+                return this._get(nextPageEndpoint);
+
+              case 6:
+                queryResults = _context3.sent;
+
+                allResults.push(queryResults);
+                shouldQueryNextPage = queryResults.continue !== undefined;
+                nextPageEndpoint = shouldQueryNextPage && this._addContinueParamsToEndpoint(endpoint, queryResults.continue);
+                _context3.next = 3;
+                break;
+
+              case 12:
+                return _context3.abrupt('return', allResults);
+
+              case 13:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function _getAndContinue(_x3) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return _getAndContinue;
     }()
 
     /**
@@ -26585,17 +26677,17 @@ var Wikipedia = function () {
   }, {
     key: '_mergeQueryResults',
     value: function _mergeQueryResults(queryResultArray) {
-      if (queryResultArray.length == 1) {
+      if (queryResultArray.length === 1) {
         return queryResultArray[0];
       }
       var mergedPages = {};
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
 
       try {
-        for (var _iterator = queryResultArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var queryResults = _step.value;
+        for (var _iterator2 = queryResultArray[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var queryResults = _step2.value;
 
           for (var key in queryResults.query.pages) {
             var page = queryResults.query.pages[key];
@@ -26612,16 +26704,16 @@ var Wikipedia = function () {
           }
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
           }
         } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
+          if (_didIteratorError2) {
+            throw _iteratorError2;
           }
         }
       }
