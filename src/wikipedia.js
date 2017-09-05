@@ -32,7 +32,7 @@ import jsonp from 'jsonp'
 class Wikipedia {
   constructor () {
     // {title : Page}
-    this.cache = {}
+    this.cachedPages = {}
   }
 
   /**
@@ -40,15 +40,16 @@ class Wikipedia {
    * @return {Page}
    */
   async getPage (title) {
-    if (this.cache[title]) {
-      return this.cache[title]
+    if (this.cachedPages[title]) {
+      return this.cachedPages[title]
     }
+
     const pages = await this.getPages([title])
     if (pages.length <= 0) {
       return undefined
     }
     const page = pages[0]
-    this.cache[title] = page
+    this.cachedPages[title] = page
     return page
   }
 
@@ -57,7 +58,10 @@ class Wikipedia {
    * @return {Object} {title : Page}
    */
   async getPages (titles) {
-    const titleChunks = _.chunk(titles, 50)
+    const cachedPages = this.getCachedPages(titles)
+    const nonCachedTitles = _.difference(titles, cachedPages.map(page => page.title))
+
+    const titleChunks = _.chunk(nonCachedTitles, 50)
     let allResults = []
     for (let titleChunk of titleChunks) {
       let endpoint = this._getQueryEndpoint(titleChunk)
@@ -66,7 +70,9 @@ class Wikipedia {
       allResults = _.concat(allResults, chunkResults)
     }
     const mergedResults = this._mergeQueryResults(allResults)
-    return this._dataToPages(mergedResults)
+    const retrievedPages = this._dataToPageMap(mergedResults)
+    this._addToCache(retrievedPages)
+    return _.assign({}, retrievedPages, cachedPages)
   }
 
   /**
@@ -154,7 +160,7 @@ class Wikipedia {
    * @param  {QueryResult} queryResult
    * @return {Object} {title : Page}
    */
-  _dataToPages (queryResult) {
+  _dataToPageMap (queryResult) {
     const pages = {}
     for (let key in queryResult.query.pages) {
       let queryPage = queryResult.query.pages[key]
@@ -165,6 +171,21 @@ class Wikipedia {
       }
     }
     return pages
+  }
+
+  /**
+   * @param  {string} titles - Titles to search in the cache
+   * @return {Object} {title : Page} - Object with the entries found in the cache
+   */
+  _getCachedPages (titles) {
+    return _.pick(this.cachedPages, titles)
+  }
+
+  /**
+   * @param {Object} {title : Page} pageMap - Pages to add to the cache
+   */
+  _addToCache (pageMap) {
+    this.cachedPages = _.assign({}, this.cachedPages, pageMap)
   }
 }
 

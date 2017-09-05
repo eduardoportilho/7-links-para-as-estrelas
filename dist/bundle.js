@@ -26434,30 +26434,54 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var Wikipedia = function () {
   function Wikipedia() {
     _classCallCheck(this, Wikipedia);
+
+    // {title : Page}
+    this.cachedPages = {};
   }
+
+  /**
+   * @param  {string} title
+   * @return {Page}
+   */
+
 
   _createClass(Wikipedia, [{
     key: 'getPage',
-
-    /**
-     * @param  {string} title
-     * @return {Page}
-     */
     value: function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(title) {
-        var pages;
+        var pages, page;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
-                return this.getPages([title]);
+                if (!this.cachedPages[title]) {
+                  _context.next = 2;
+                  break;
+                }
+
+                return _context.abrupt('return', this.cachedPages[title]);
 
               case 2:
-                pages = _context.sent;
-                return _context.abrupt('return', pages[title]);
+                _context.next = 4;
+                return this.getPages([title]);
 
               case 4:
+                pages = _context.sent;
+
+                if (!(pages.length <= 0)) {
+                  _context.next = 7;
+                  break;
+                }
+
+                return _context.abrupt('return', undefined);
+
+              case 7:
+                page = pages[0];
+
+                this.cachedPages[title] = page;
+                return _context.abrupt('return', page);
+
+              case 10:
               case 'end':
                 return _context.stop();
             }
@@ -26481,23 +26505,27 @@ var Wikipedia = function () {
     key: 'getPages',
     value: function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(titles) {
-        var titleChunks, allResults, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, titleChunk, endpoint, chunkResults, mergedResults;
+        var cachedPages, nonCachedTitles, titleChunks, allResults, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, titleChunk, endpoint, chunkResults, mergedResults, retrievedPages;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                titleChunks = _lodash2.default.chunk(titles, 50);
+                cachedPages = this.getCachedPages(titles);
+                nonCachedTitles = _lodash2.default.difference(titles, cachedPages.map(function (page) {
+                  return page.title;
+                }));
+                titleChunks = _lodash2.default.chunk(nonCachedTitles, 50);
                 allResults = [];
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context2.prev = 5;
+                _context2.prev = 7;
                 _iterator = titleChunks[Symbol.iterator]();
 
-              case 7:
+              case 9:
                 if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                  _context2.next = 17;
+                  _context2.next = 19;
                   break;
                 }
 
@@ -26505,63 +26533,66 @@ var Wikipedia = function () {
                 endpoint = this._getQueryEndpoint(titleChunk);
                 // TODO: is it possible to parallelize?
 
-                _context2.next = 12;
+                _context2.next = 14;
                 return this._getAndContinue(endpoint);
 
-              case 12:
+              case 14:
                 chunkResults = _context2.sent;
 
                 allResults = _lodash2.default.concat(allResults, chunkResults);
 
-              case 14:
+              case 16:
                 _iteratorNormalCompletion = true;
-                _context2.next = 7;
-                break;
-
-              case 17:
-                _context2.next = 23;
+                _context2.next = 9;
                 break;
 
               case 19:
-                _context2.prev = 19;
-                _context2.t0 = _context2['catch'](5);
+                _context2.next = 25;
+                break;
+
+              case 21:
+                _context2.prev = 21;
+                _context2.t0 = _context2['catch'](7);
                 _didIteratorError = true;
                 _iteratorError = _context2.t0;
 
-              case 23:
-                _context2.prev = 23;
-                _context2.prev = 24;
+              case 25:
+                _context2.prev = 25;
+                _context2.prev = 26;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
-              case 26:
-                _context2.prev = 26;
+              case 28:
+                _context2.prev = 28;
 
                 if (!_didIteratorError) {
-                  _context2.next = 29;
+                  _context2.next = 31;
                   break;
                 }
 
                 throw _iteratorError;
 
-              case 29:
-                return _context2.finish(26);
-
-              case 30:
-                return _context2.finish(23);
-
               case 31:
-                mergedResults = this._mergeQueryResults(allResults);
-                return _context2.abrupt('return', this._dataToPages(mergedResults));
+                return _context2.finish(28);
+
+              case 32:
+                return _context2.finish(25);
 
               case 33:
+                mergedResults = this._mergeQueryResults(allResults);
+                retrievedPages = this._dataToPageMap(mergedResults);
+
+                this._addToCache(retrievedPages);
+                return _context2.abrupt('return', _lodash2.default.assign({}, retrievedPages, cachedPages));
+
+              case 37:
               case 'end':
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[5, 19, 23, 31], [24,, 26, 30]]);
+        }, _callee2, this, [[7, 21, 25, 33], [26,, 28, 32]]);
       }));
 
       function getPages(_x2) {
@@ -26727,8 +26758,8 @@ var Wikipedia = function () {
      */
 
   }, {
-    key: '_dataToPages',
-    value: function _dataToPages(queryResult) {
+    key: '_dataToPageMap',
+    value: function _dataToPageMap(queryResult) {
       var pages = {};
       for (var key in queryResult.query.pages) {
         var queryPage = queryResult.query.pages[key];
@@ -26741,6 +26772,27 @@ var Wikipedia = function () {
         };
       }
       return pages;
+    }
+
+    /**
+     * @param  {string} titles - Titles to search in the cache
+     * @return {Object} {title : Page} - Object with the entries found in the cache
+     */
+
+  }, {
+    key: '_getCachedPages',
+    value: function _getCachedPages(titles) {
+      return _lodash2.default.pick(this.cachedPages, titles);
+    }
+
+    /**
+     * @param {Object} {title : Page} pageMap - Pages to add to the cache
+     */
+
+  }, {
+    key: '_addToCache',
+    value: function _addToCache(pageMap) {
+      this.cachedPages = _lodash2.default.assign({}, this.cachedPages, pageMap);
     }
   }]);
 
