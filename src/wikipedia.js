@@ -30,13 +30,26 @@ import jsonp from 'jsonp'
  */
 
 class Wikipedia {
+  constructor () {
+    // {title : Page}
+    this.cache = {}
+  }
+
   /**
    * @param  {string} title
    * @return {Page}
    */
   async getPage (title) {
+    if (this.cache[title]) {
+      return this.cache[title]
+    }
     const pages = await this.getPages([title])
-    return pages[title]
+    if (pages.length <= 0) {
+      return undefined
+    }
+    const page = pages[0]
+    this.cache[title] = page
+    return page
   }
 
   /**
